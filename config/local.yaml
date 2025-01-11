@@ -1,0 +1,3 @@
+env: "local"
+storage_path: "./storages/dinner.db"
+timeout: 30
