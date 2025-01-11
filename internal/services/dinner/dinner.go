@@ -1,3 +1,5 @@
+// Основная логика приложения.
+// Сервис отдает массив из блюд для ужина.
 package dinnerservice
 
 import (
@@ -14,15 +16,18 @@ type Dinner struct {
 	historyProvider HistoryProvider
 }
 
+// Доступ к списку доступных блюд
 type FoodProvider interface {
 	GetFoods() ([]models.Food, error)
 }
 
+// Доступ к истории запросов пользователей
 type HistoryProvider interface {
 	SaveRequest(userId int64) error
 	IsLimit(userId int64) (bool, error)
 }
 
+// New - конструктор сервиса
 func New(
 	log *slog.Logger,
 	foodProvider FoodProvider,
@@ -35,14 +40,14 @@ func New(
 	}
 }
 
-// IsAdmin checks if user is admin.
+// GetRandomDinner отдает массив блюд на ужин для юзера userId.
 func (d *Dinner) GetRandomDinner(userId int64) ([]models.Food, error) {
 	const op = "Dinner.GetRandomDinner"
 
 	log := d.log.With(
 		slog.String("op", op),
 	)
-
+	// проверка на лимит запросов
 	limit, err := d.historyProvider.IsLimit(userId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -51,40 +56,43 @@ func (d *Dinner) GetRandomDinner(userId int64) ([]models.Food, error) {
 		return nil, fmt.Errorf("%s: %w", op, services.ErrAttemptLimitExceeded)
 	}
 
+	// Запрос списка доступных блюд
 	foods, err := d.foodProvider.GetFoods()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	//Сохранение запроса пользователя в истории
 	err = d.historyProvider.SaveRequest(userId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+	log.Info("select dinner save reques")
 
+	// Проверка, что список блюд не пустой
 	if len(foods) == 0 {
 		return nil, fmt.Errorf("%s: %w", op, services.ErrEmptyFood)
 	}
 
+	// Подучение случайного блюда
 	rndPos := rand.IntN(len(foods))
-
 	food := make([]models.Food, 1, 2)
 	food[0] = foods[rndPos]
 
+	// В зависимости от типа блюда отдаем 1 блюдо или ищем гранир к мясу
 	switch food[0].Category {
 	case models.Soup:
 		return food, nil
 	case models.Salad:
 		return food, nil
-	}
-	if food[0].Category == models.Meat {
+	case models.Meat:
 		sideDishes := GetSideDishes(&foods)
 		if len(sideDishes) == 0 {
 			return food, nil
 		}
 		food = append(food, sideDishes[rand.IntN(len(sideDishes))])
 		return food, nil
-	}
-	if food[0].Category == models.SideDish {
+	case models.SideDish:
 		meats := GetMeats(&foods)
 		if len(meats) == 0 {
 			return food, nil
@@ -92,11 +100,10 @@ func (d *Dinner) GetRandomDinner(userId int64) ([]models.Food, error) {
 		food = append(food, meats[rand.IntN(len(meats))])
 		return food, nil
 	}
-
-	log.Info("select dinner save reques", slog.Any("food", food))
-	return food, nil
+	return nil, services.ErrEmptyFood
 }
 
+// GetSideDishes ищет гарнир к мясу
 func GetSideDishes(foods *[]models.Food) []models.Food {
 	res := make([]models.Food, 0)
 	if len(*foods) == 0 {
@@ -110,6 +117,7 @@ func GetSideDishes(foods *[]models.Food) []models.Food {
 	return res
 }
 
+// GetMeats ищет мясо к гарниру
 func GetMeats(foods *[]models.Food) []models.Food {
 	res := make([]models.Food, 0)
 	if len(*foods) == 0 {

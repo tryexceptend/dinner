@@ -13,7 +13,7 @@ type Storage struct {
 	db  *sql.DB
 }
 
-// Конструктор Storage
+// New конструктор Storage
 func New(log *slog.Logger, storagePath string) (*Storage, error) {
 	const op = "storage.sqlite.New"
 
@@ -30,6 +30,7 @@ func New(log *slog.Logger, storagePath string) (*Storage, error) {
 	}, nil
 }
 
+// GetFoods отдает список доступных блюд
 func (s *Storage) GetFoods() ([]models.Food, error) {
 	const op = "storagesqlite.GetFoods"
 
@@ -48,6 +49,7 @@ func (s *Storage) GetFoods() ([]models.Food, error) {
 	return foods, nil
 }
 
+// SaveRequest сохраняет запрос юзера userId в историю
 func (s *Storage) SaveRequest(userId int64) error {
 	const op = "storagesqlite.SaveRequest"
 
@@ -64,6 +66,7 @@ func (s *Storage) SaveRequest(userId int64) error {
 	return nil
 }
 
+// IsLimit Проверяет превышен ли лимит запросов для юзера userId
 func (s *Storage) IsLimit(userId int64) (bool, error) {
 	const op = "storagesqlite.IsLimit"
 

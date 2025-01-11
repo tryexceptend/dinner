@@ -1,3 +1,4 @@
+// Пакет для работы с конфигами
 package config
 
 import (
@@ -7,18 +8,21 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
+// Тип окружения
 const (
 	EnvLocal = "local"
 	EnvDev   = "dev"
 	EnvProd  = "prod"
 )
 
+// Структура конфига с привязкой к структуре из файла
 type Config struct {
 	Env         string `yaml:"env" env-required:"local"`
 	StoragePath string `yaml:"storage_path" env-required:"./data"`
 	Timeout     int    `yaml:"timeout" env-default:30`
 }
 
+// MustLoadConfig загружает конфиг из файла в структуру Config
 func MustLoadConfig() *Config {
 	configPath := fetchConfigPath()
 	if configPath == "" {
@@ -35,8 +39,7 @@ func MustLoadConfig() *Config {
 	return &cfg
 }
 
-// берет путь к файлу конфига из аргументов
-// или из переменной окружения
+// fetchConfigPath берет путь к файлу конфига из аргументов или из переменной окружения
 func fetchConfigPath() string {
 	var res string
 	flag.StringVar(&res, "config", "", "path to config file")

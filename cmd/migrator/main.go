@@ -1,3 +1,4 @@
+// Точка входа для запуска мигратора
 package main
 
 import (
@@ -23,21 +24,18 @@ func main() {
 	flag.StringVar(&storagePath, "storage-path", "", "path to storage")
 	// Путь до папки с миграциями
 	flag.StringVar(&migrationsPath, "migrations-path", "", "path to migrations")
-	// Таблица, в которой будет храниться информация о миграциях. Она нужна
-	// для того, чтобы понимать, какие миграции уже применены, а какие нет
-	// Дефолтное значение — 'migrations'
+	// Таблица, в которой будет храниться информация о миграциях.
 	flag.StringVar(&migrationsTable, "migrations-table", "migrations", "name of migrations table")
 	// Выполняем парсинг флагов
 	flag.Parse()
 
 	// Валидация параметров
 	if storagePath == "" {
-		// Простейший способ обработки ошибки
-		// При необходимости можете выбрать более подходящий вариант
-		// Меня устраивает паника, поскольку это вспомогательная утилита
+		// Паника, если путь к БД не указан
 		panic("storage-path is required")
 	}
 	if migrationsPath == "" {
+		// Паника, если путь в файлам миграции не указан
 		panic("migrations-path is required")
 	}
 

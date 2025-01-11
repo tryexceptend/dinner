@@ -51,7 +51,7 @@ func (b *TelegramBot) Run() {
 		if update.Message == nil {
 			continue
 		}
-		//log.Debug("add message", slog.Any("cfg", update.Message))
+		// Обработка команды /dinner
 		if update.Message.Text == "/dinner" {
 			err := b.DinnerCommand(bot, update.Message)
 			if err != nil {
@@ -62,20 +62,21 @@ func (b *TelegramBot) Run() {
 	}
 }
 
+// DinnerCommand запрашивет у сервиса блюда на ужин.
 func (b *TelegramBot) DinnerCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) error {
 	if message.Text != "/dinner" {
 		return nil
 	}
 	const op = "TelegramBot.DinnerCommand"
 	log := b.log.With(slog.String("op", op))
-
+	// Получение блюд
 	foods, err := b.dinner.GetRandomDinner(message.From.ID)
 	if err != nil {
+		// Превышен лимит запросов
 		if errors.Is(err, services.ErrAttemptLimitExceeded) {
 			b.log.Debug("user attempt limit exceeded", slog.Attr{Key: "error", Value: slog.StringValue(err.Error())})
 
 			msg := tgbotapi.NewMessage(message.Chat.ID, "Лимит попыток исчерпан")
-			//msg.ReplyToMessageID = update.Message.MessageID
 			if _, err := bot.Send(msg); err != nil {
 				log.Error("send message error", slog.Attr{Key: "error", Value: slog.StringValue(err.Error())})
 			}
@@ -84,14 +85,17 @@ func (b *TelegramBot) DinnerCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Mess
 		log.Error("get random dinner error", slog.Any("error", slog.Attr{Key: "error", Value: slog.StringValue(err.Error())}))
 		return err
 	}
+	// Нет блюд
 	if len(foods) == 0 {
 		log.Error("get random dinner error", slog.Any("error", slog.Attr{Key: "error", Value: slog.StringValue(services.ErrEmptyFood.Error())}))
 		return services.ErrEmptyFood
 	}
+	// Формирование ответного сообщения
 	msgFood := foods[0].Name
 	for i := 1; i < len(foods); i++ {
 		msgFood = msgFood + " и " + strings.ToLower(foods[i].Name)
 	}
+	// Отправка сообщения пользователю
 	msg := tgbotapi.NewMessage(message.Chat.ID, msgFood)
 	if _, err := bot.Send(msg); err != nil {
 		log.Error("send message error", slog.Attr{Key: "error", Value: slog.StringValue(err.Error())})
