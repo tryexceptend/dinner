@@ -1,4 +1,4 @@
-TRUNCATE TABLE foods;
+DELETE FROM foods;
 
 INSERT INTO foods
 (id, name, category)
