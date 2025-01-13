@@ -93,7 +93,8 @@ func (b *TelegramBot) DinnerCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Mess
 	// Формирование ответного сообщения
 	msgFood := foods[0].Name
 	for i := 1; i < len(foods); i++ {
-		msgFood = msgFood + " и " + strings.ToLower(foods[i].Name)
+		runs := []rune(foods[i].Name)
+		msgFood = msgFood + " и " + strings.ToLower(string(runs[0:1])) + string(runs[1:])
 	}
 	// Отправка сообщения пользователю
 	msg := tgbotapi.NewMessage(message.Chat.ID, msgFood)
